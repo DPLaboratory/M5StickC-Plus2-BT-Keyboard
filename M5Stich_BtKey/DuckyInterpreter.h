@@ -102,6 +102,8 @@ private:
         while (i < to && !_stopped) {
             String &line = _lines[i];
 
+            _log("RUN >> : " + line);
+
             // Riga vuota o commento
             if (line.length() == 0 || line.startsWith("REM") || line.startsWith("//")) {
                 i++; continue;

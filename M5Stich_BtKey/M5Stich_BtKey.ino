@@ -45,34 +45,14 @@ KeyEntry keys[] = {
 };
 
 const char* DUCKY_SCRIPT = R"DUCKY(
-  STRING DPLab Script BT Keyboard v.01.4
-  ENTER
-  STRING btn 1
-  ENTER
-
-  VAR $TIME = 60*15
-  VAR $LO = 10
-  VAR $RIGHE = 0
-
-  WHILE ($TIME > 0)
-    STRING $RIGHE
-    $LO = 10
-      WHILE ($LO > 0)
-      STRING .
-      DELAY 1000
-      $LO = $LO-1
-    END_WHILE
+REM Conta da 1 a 5 usando WHILE
+VAR $i = 1
+WHILE $i <= 5
+    STRING Riga numero: 
+    STRING $i
     ENTER
-    $TIME = $TIME-1
-    IF ($RIGHE >= 10) THEN
-      $RIGHE = 0
-      CONTROL a
-      DELAY 100
-      DELETE
-      DELAY 100
-    END_IF
-    $RIGHE = $RIGHE + 1
-  END_WHILE
+    VAR $i += 1
+END_WHILE
 )DUCKY";
 
 const int NUM_KEYS = sizeof(keys) / sizeof(keys[0]);
@@ -243,12 +223,13 @@ void setup() {
   };
 
   ducky.onLog = [](const String &msg) {
-      M5.Display.println(msg);
+      //M5.Display.println(msg);
       Serial.println(msg);
   };
 
   // Carica lo script
   ducky.load(String(DUCKY_SCRIPT));
+  Serial.begin(115200);
 }
 
 // ── Loop ──────────────────────────────────────────────────────
