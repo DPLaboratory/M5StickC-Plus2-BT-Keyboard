@@ -14,28 +14,31 @@
 BleKeyboard bleKeyboard("M5Stick Tastiera", "M5Stack", 100);
 
 // ── Tipo di tasto ──────────────────────────────────────────────
-enum KeyType { KEY_TYPE_CHAR, KEY_TYPE_SPECIAL, KEY_TYPE_MEDIA, KEY_TYPE_LOOP};
+enum KeyType { KEY_TYPE_CHAR, KEY_TYPE_SPECIAL, KEY_TYPE_MEDIA, KEY_TYPE_LOOP, KEY_TYPE_PASSWORD};
 
 struct KeyEntry {
   KeyType        type;
   uint8_t        charCode;       // usato per KEY_TYPE_CHAR / KEY_TYPE_SPECIAL
   const uint8_t* mediaCode;      // usato per KEY_TYPE_MEDIA
   const char*    label;
+  const char*    password;
 };
 
 // ── Tabella tasti ─────────────────────────────────────────────
 KeyEntry keys[] = {
-  { KEY_TYPE_MEDIA,   0,          KEY_MEDIA_PLAY_PAUSE,    "Play/Pause"  },
-  { KEY_TYPE_MEDIA,   0,          KEY_MEDIA_NEXT_TRACK,    "Next Track"  },
-  { KEY_TYPE_MEDIA,   0,          KEY_MEDIA_PREVIOUS_TRACK,"Prev Track"  },
-  { KEY_TYPE_MEDIA,   0,          KEY_MEDIA_VOLUME_UP,     "Volume +"    },
-  { KEY_TYPE_MEDIA,   0,          KEY_MEDIA_VOLUME_DOWN,   "Volume -"    },
-  { KEY_TYPE_MEDIA,   0,          KEY_MEDIA_MUTE,          "Mute"        },
-  { KEY_TYPE_CHAR,    'a',        nullptr,                 "Lettera A"   },
-  { KEY_TYPE_CHAR,    ' ',        nullptr,                 "Spazio"      },
-  { KEY_TYPE_SPECIAL, KEY_RETURN, nullptr,                 "Invio"       },
-  { KEY_TYPE_SPECIAL, KEY_ESC,    nullptr,                 "Escape"      },
-  { KEY_TYPE_LOOP,    '.',        nullptr,                 "KeyLoop"     },
+  { KEY_TYPE_MEDIA,   0,          KEY_MEDIA_PLAY_PAUSE,    "Play/Pause" , ""  },
+  { KEY_TYPE_MEDIA,   0,          KEY_MEDIA_NEXT_TRACK,    "Next Track" , ""  },
+  { KEY_TYPE_MEDIA,   0,          KEY_MEDIA_PREVIOUS_TRACK,"Prev Track" , ""  },
+  { KEY_TYPE_MEDIA,   0,          KEY_MEDIA_VOLUME_UP,     "Volume +"   , ""  },
+  { KEY_TYPE_MEDIA,   0,          KEY_MEDIA_VOLUME_DOWN,   "Volume -"   , ""  },
+  { KEY_TYPE_MEDIA,   0,          KEY_MEDIA_MUTE,          "Mute"       , ""  },
+  { KEY_TYPE_CHAR,    'a',        nullptr,                 "Lettera A"  , ""  },
+  { KEY_TYPE_CHAR,    ' ',        nullptr,                 "Spazio"     , ""  },
+  { KEY_TYPE_SPECIAL, KEY_RETURN, nullptr,                 "Invio"      , ""  },
+  { KEY_TYPE_SPECIAL, KEY_ESC,    nullptr,                 "Escape"     , ""  },
+  { KEY_TYPE_LOOP,    '.',        nullptr,                 "KeyLoop"    , ""  },
+  { KEY_TYPE_PASSWORD,  0,        nullptr,                 "Password 1"    , "pass 1ABC" },
+  { KEY_TYPE_PASSWORD,  0,        nullptr,                 "Password 2"    , "pass 2DEF" },
 };
 
 const int NUM_KEYS = sizeof(keys) / sizeof(keys[0]);
@@ -115,9 +118,20 @@ void sendSelectedKey() {
 
     case KEY_TYPE_LOOP:
       while (M5.BtnB.wasPressed() == false) {
+        M5.update();
         bleKeyboard.print((char)k.charCode);
         delay(1000);
       }
+      break;
+
+    case KEY_TYPE_PASSWORD:
+      for (int i = 0; i < strlen(k.password); i++) {
+        bleKeyboard.print((char)k.password[i]);
+        delay(50);
+      }
+      bleKeyboard.press(KEY_RETURN);
+      delay(50);
+      bleKeyboard.releaseAll();
       break;
   }
 }
