@@ -10,11 +10,13 @@
 
 #include <M5StickCPlus2.h>
 #include <BleKeyboard.h>
+#include "DuckyInterpreter.h"
 
-BleKeyboard bleKeyboard("M5Stick Tastiera", "M5Stack", 100);
+BleKeyboard bleKeyboard("Yellow-duck", "DPLab", 100);
+DuckyInterpreter ducky;
 
 // ── Tipo di tasto ──────────────────────────────────────────────
-enum KeyType { KEY_TYPE_CHAR, KEY_TYPE_SPECIAL, KEY_TYPE_MEDIA, KEY_TYPE_LOOP, KEY_TYPE_PASSWORD};
+enum KeyType { KEY_TYPE_CHAR, KEY_TYPE_SPECIAL, KEY_TYPE_MEDIA, KEY_TYPE_LOOP, KEY_TYPE_PASSWORD, KEY_TYPE_DUCKY_SCRIPT};
 
 struct KeyEntry {
   KeyType        type;
@@ -39,15 +41,49 @@ KeyEntry keys[] = {
   { KEY_TYPE_LOOP,    '.',        nullptr,                 "KeyLoop"    , ""  },
   { KEY_TYPE_PASSWORD,  0,        nullptr,                 "PW Aizoon"  , "XXXXXX" },
   { KEY_TYPE_PASSWORD,  0,        nullptr,                 "PW ETT"     , "ABCDEF" },
+  { KEY_TYPE_DUCKY_SCRIPT, 0,      nullptr,                 "DUCKY SCRIPT", "" },
 };
+
+const char* DUCKY_SCRIPT = R"DUCKY(
+  STRING DPLab Script BT Keyboard v.01.4
+  ENTER
+  STRING btn 1
+  ENTER
+
+  VAR $TIME = 60*15
+  VAR $LO = 10
+  VAR $RIGHE = 0
+
+  WHILE ($TIME > 0)
+    STRING $RIGHE
+    $LO = 10
+      WHILE ($LO > 0)
+      STRING .
+      DELAY 1000
+      $LO = $LO-1
+    END_WHILE
+    ENTER
+    $TIME = $TIME-1
+    IF ($RIGHE >= 10) THEN
+      $RIGHE = 0
+      CONTROL a
+      DELAY 100
+      DELETE
+      DELAY 100
+    END_IF
+    $RIGHE = $RIGHE + 1
+  END_WHILE
+)DUCKY";
 
 const int NUM_KEYS = sizeof(keys) / sizeof(keys[0]);
 int selectedKey = 0;
 
 bool lastConnected   = false;
 bool feedbackVisible = false;
+bool ducky_run = false;
 unsigned long feedbackTime = 0;
 const unsigned long FEEDBACK_DURATION = 600;
+int iloop = 0;
 
 // ── UI ────────────────────────────────────────────────────────
 void drawUI() {
@@ -98,8 +134,6 @@ void drawUI() {
     lcd.print(">> INVIATO!");
   }
 
-  
-
   lcd.drawLine(0, lcd.height() - 28, lcd.width(), lcd.height() - 28, TFT_DARKGREY);
   lcd.setTextSize(1);
   lcd.setTextColor(TFT_LIGHTGREY);
@@ -131,10 +165,18 @@ void sendSelectedKey() {
       break;
 
     case KEY_TYPE_LOOP:
+      iloop = 0;
       while (M5.BtnB.wasPressed() == false) {
         M5.update();
         bleKeyboard.print((char)k.charCode);
         delay(1000);
+        if (iloop > 10) {
+          bleKeyboard.press(KEY_RETURN);
+          delay(50);
+          bleKeyboard.releaseAll();
+          iloop=0;
+        }
+        iloop++;
       }
       break;
 
@@ -146,6 +188,11 @@ void sendSelectedKey() {
       bleKeyboard.press(KEY_RETURN);
       delay(50);
       bleKeyboard.releaseAll();
+      break;
+
+    case KEY_TYPE_DUCKY_SCRIPT:
+      ducky.run();
+      ducky_run = true;
       break;
   }
 }
@@ -166,6 +213,42 @@ void setup() {
   bleKeyboard.begin();
   delay(500);
   drawUI();
+
+
+  // ── Collega i callback ────────────────────────────────────────────────
+  ducky.onSendKey = [](uint8_t modifier, uint8_t key) {
+      if (!bleKeyboard.isConnected()) return;
+      if (key == 0 && modifier == 0) {
+          bleKeyboard.releaseAll();
+          return;
+      }
+      // Premi
+      KeyReport report;
+      memset(&report, 0, sizeof(report));
+      report.modifiers = modifier;
+      report.keys[0]   = key;
+      bleKeyboard.sendReport(&report);
+      delay(20);
+      bleKeyboard.releaseAll();
+  };
+
+  ducky.onSendChar = [](char c) {
+      if (!bleKeyboard.isConnected()) return;
+      bleKeyboard.print(c);
+  };
+
+  ducky.onSendString = [](const String &s) {
+      if (!bleKeyboard.isConnected()) return;
+      bleKeyboard.print(s);
+  };
+
+  ducky.onLog = [](const String &msg) {
+      M5.Display.println(msg);
+      Serial.println(msg);
+  };
+
+  // Carica lo script
+  ducky.load(String(DUCKY_SCRIPT));
 }
 
 // ── Loop ──────────────────────────────────────────────────────
@@ -185,6 +268,9 @@ void loop() {
   }
 
   if (M5.BtnB.wasPressed()) {
+    if (ducky_run) {
+      ducky.stop();
+    }  
     selectedKey     = (selectedKey + 1) % NUM_KEYS;
     feedbackVisible = false;
     drawUI();
