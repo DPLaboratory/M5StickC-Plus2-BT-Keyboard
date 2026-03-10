@@ -6,6 +6,7 @@
 * Libreria richiesta: ESP32 BLE Keyboard
 * Installa da Arduino Library Manager: "ESP32 BLE Keyboard" by T-vK
 
+```C
 KeyEntry keys[] = {
   { KEY_TYPE_MEDIA,   0,          KEY_MEDIA_PLAY_PAUSE,    "Play/Pause"  },
   { KEY_TYPE_MEDIA,   0,          KEY_MEDIA_NEXT_TRACK,    "Next Track"  },
@@ -19,3 +20,4 @@ KeyEntry keys[] = {
   { KEY_TYPE_SPECIAL, KEY_ESC,    nullptr,                 "Escape"      },
   { KEY_TYPE_LOOP,    '.',        nullptr,                 "KeyLoop"     },
 };
+```
