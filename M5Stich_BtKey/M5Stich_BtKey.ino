@@ -27,18 +27,18 @@ struct KeyEntry {
 // ── Tabella tasti ─────────────────────────────────────────────
 KeyEntry keys[] = {
   { KEY_TYPE_MEDIA,   0,          KEY_MEDIA_PLAY_PAUSE,    "Play/Pause" , ""  },
-  { KEY_TYPE_MEDIA,   0,          KEY_MEDIA_NEXT_TRACK,    "Next Track" , ""  },
-  { KEY_TYPE_MEDIA,   0,          KEY_MEDIA_PREVIOUS_TRACK,"Prev Track" , ""  },
-  { KEY_TYPE_MEDIA,   0,          KEY_MEDIA_VOLUME_UP,     "Volume +"   , ""  },
-  { KEY_TYPE_MEDIA,   0,          KEY_MEDIA_VOLUME_DOWN,   "Volume -"   , ""  },
-  { KEY_TYPE_MEDIA,   0,          KEY_MEDIA_MUTE,          "Mute"       , ""  },
-  { KEY_TYPE_CHAR,    'a',        nullptr,                 "Lettera A"  , ""  },
-  { KEY_TYPE_CHAR,    ' ',        nullptr,                 "Spazio"     , ""  },
-  { KEY_TYPE_SPECIAL, KEY_RETURN, nullptr,                 "Invio"      , ""  },
-  { KEY_TYPE_SPECIAL, KEY_ESC,    nullptr,                 "Escape"     , ""  },
+  // { KEY_TYPE_MEDIA,   0,          KEY_MEDIA_NEXT_TRACK,    "Next Track" , ""  },
+  // { KEY_TYPE_MEDIA,   0,          KEY_MEDIA_PREVIOUS_TRACK,"Prev Track" , ""  },
+  // { KEY_TYPE_MEDIA,   0,          KEY_MEDIA_VOLUME_UP,     "Volume +"   , ""  },
+  // { KEY_TYPE_MEDIA,   0,          KEY_MEDIA_VOLUME_DOWN,   "Volume -"   , ""  },
+  // { KEY_TYPE_MEDIA,   0,          KEY_MEDIA_MUTE,          "Mute"       , ""  },
+  // { KEY_TYPE_CHAR,    'a',        nullptr,                 "Lettera A"  , ""  },
+  // { KEY_TYPE_CHAR,    ' ',        nullptr,                 "Spazio"     , ""  },
+  // { KEY_TYPE_SPECIAL, KEY_RETURN, nullptr,                 "Invio"      , ""  },
+  // { KEY_TYPE_SPECIAL, KEY_ESC,    nullptr,                 "Escape"     , ""  },
   { KEY_TYPE_LOOP,    '.',        nullptr,                 "KeyLoop"    , ""  },
-  { KEY_TYPE_PASSWORD,  0,        nullptr,                 "Password 1"    , "pass 1ABC" },
-  { KEY_TYPE_PASSWORD,  0,        nullptr,                 "Password 2"    , "pass 2DEF" },
+  { KEY_TYPE_PASSWORD,  0,        nullptr,                 "PW Aizoon"  , "XXXXXX" },
+  { KEY_TYPE_PASSWORD,  0,        nullptr,                 "PW ETT"     , "ABCDEF" },
 };
 
 const int NUM_KEYS = sizeof(keys) / sizeof(keys[0]);
@@ -51,6 +51,9 @@ const unsigned long FEEDBACK_DURATION = 600;
 
 // ── UI ────────────────────────────────────────────────────────
 void drawUI() {
+  int livello    = M5.Power.getBatteryLevel();   // 0-100
+  bool carica    = M5.Power.isCharging();
+
   auto& lcd = M5.Display;
   lcd.fillScreen(TFT_BLACK);
 
@@ -58,6 +61,15 @@ void drawUI() {
   lcd.setTextSize(1);
   lcd.setCursor(4, 4);
   lcd.print("BT Keyboard");
+
+  lcd.setCursor(lcd.width() - 30, 4);
+  lcd.printf("%d%%", livello);
+
+  lcd.setCursor(lcd.width() - 40, 18);
+  if (carica) {
+    lcd.print("carica");
+  }
+
 
   lcd.setCursor(4, 18);
   if (bleKeyboard.isConnected()) {
@@ -73,7 +85,7 @@ void drawUI() {
   lcd.setTextColor(TFT_YELLOW);
   lcd.setTextSize(1);
   lcd.setCursor(4, 36);
-  lcd.print("Tasto:");
+  lcd.print("Opzione:");
   lcd.setTextColor(TFT_WHITE);
   lcd.setTextSize(2);
   lcd.setCursor(4, 50);
@@ -85,6 +97,8 @@ void drawUI() {
     lcd.setCursor(4, 80);
     lcd.print(">> INVIATO!");
   }
+
+  
 
   lcd.drawLine(0, lcd.height() - 28, lcd.width(), lcd.height() - 28, TFT_DARKGREY);
   lcd.setTextSize(1);
